@@ -17,10 +17,10 @@
         .subtitle { color: #636e72; font-size: 0.9rem; margin-bottom: 30px; }
 
         /* 룰렛 스타일 */
-        .roulette-container { position: relative; width: 280px; height: 280px; margin: 0 auto 30px; border: 8px solid var(--army-green); border-radius: 50%; overflow: hidden; transition: 4s cubic-bezier(0.2, 0, 0, 1); }
-        .roulette-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--point-red); z-index: 10; }
+        .roulette-container { position: relative; width: 280px; height: 280px; margin: 0 auto 30px; border: 8px solid var(--army-green); border-radius: 50%; overflow: hidden; }
+        .roulette-pointer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--point-red); z-index: 10; }
         
-        #canvas { width: 100%; height: 100%; transform: rotate(0deg); transition: 4s cubic-bezier(0.1, 0, 0, 1); }
+        #canvas { width: 100%; height: 100%; transform: rotate(0deg); transition: transform 4s cubic-bezier(0.1, 0, 0, 1); }
 
         /* 결과 창 */
         #result-popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; background: var(--point-red); color: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 20; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -61,7 +61,6 @@
         const options = ["원샷 실시!", "좌우 옆사람 건배", "안주 압수", "나만 살기", "다같이 원샷", "조교의 애교", "00초간 댄스", "옆사람 먹여주기"];
         const colors = ["#4b5320", "#5c6628", "#6d7a2f", "#4b5320", "#5c6628", "#6d7a2f", "#4b5320", "#5c6628"];
 
-        // 룰렛 그리기
         function drawRoulette() {
             const arc = (Math.PI * 2) / options.length;
             for (let i = 0; i < options.length; i++) {
@@ -71,40 +70,49 @@
                 ctx.arc(150, 150, 150, arc * i, arc * (i + 1));
                 ctx.fill();
                 ctx.save();
-                
-                // 텍스트 그리기
                 ctx.translate(150, 150);
                 ctx.rotate(arc * i + arc / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "white";
-                ctx.font = "bold 14px Pretendard";
-                ctx.fillText(options[i], 130, 10);
+                ctx.font = "bold 15px Pretendard";
+                ctx.fillText(options[i], 135, 10);
                 ctx.restore();
             }
         }
 
+        let currentRotation = 0;
         let isSpinning = false;
+
         function spin() {
             if (isSpinning) return;
             isSpinning = true;
-            
-            const randomRotate = Math.floor(Math.random() * 3600) + 3600; // 최소 10바퀴 이상
-            canvas.style.transform = `rotate(${randomRotate}deg)`;
+
+            // 이전 팝업 닫기
+            document.getElementById('result-popup').style.display = 'none';
+
+            // 최소 5바퀴 + 랜덤 각도 추가
+            const rotateAdd = Math.floor(Math.random() * 3600) + 1800; 
+            currentRotation += rotateAdd; 
+
+            canvas.style.transition = 'transform 4s cubic-bezier(0.1, 0, 0, 1)';
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
 
             setTimeout(() => {
                 isSpinning = false;
-                const actualRotate = randomRotate % 360;
-                const index = Math.floor((360 - actualRotate) / (360 / options.length)) % options.length;
+                
+                // 화살표가 가리키는 인덱스 계산 (상단 270도 보정)
+                const actualDegree = currentRotation % 360;
+                const segmentDegree = 360 / options.length;
+                const index = Math.floor(((360 - actualDegree) + 270) % 360 / segmentDegree);
                 
                 showResult(options[index]);
-            }, 4100);
+            }, 4000);
         }
 
         function showResult(msg) {
             const popup = document.getElementById('result-popup');
             const msgBox = document.getElementById('result-msg');
             
-            // 조교 말투 가미
             const armyQuotes = [
                 `"${msg}" 목소리가 작다! 똑바로 마신다! 실시!`,
                 `"${msg}" 정신 안 차립니까? 한 방에 끝냅니다!`,
@@ -114,10 +122,6 @@
             
             msgBox.innerText = armyQuotes[Math.floor(Math.random() * armyQuotes.length)];
             popup.style.display = 'block';
-            
-            // 캔버스 초기화 (다음 판을 위해)
-            canvas.style.transition = 'none';
-            canvas.style.transform = `rotate(${randomRotate % 360}deg)`;
         }
 
         drawRoulette();

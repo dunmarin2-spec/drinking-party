@@ -10,7 +10,6 @@
         body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: var(--bg-white); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
 
         .app-card { width: 90%; max-width: 400px; background: white; padding: 30px; border-radius: 30px; box-shadow: 0 15px 50px rgba(0,0,0,0.1); text-align: center; border: 3px solid var(--army-green); }
-        
         .badge { background: var(--army-green); color: white; padding: 5px 15px; border-radius: 50px; font-weight: 800; font-size: 0.8rem; margin-bottom: 10px; display: inline-block; }
         
         h1 { font-size: 1.8rem; font-weight: 900; color: var(--army-green); margin: 10px 0; }
@@ -25,11 +24,10 @@
         /* 결과 창 */
         #result-popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; background: var(--point-red); color: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 20; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .result-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 10px; }
-        .result-msg { font-size: 1.1rem; font-weight: 600; line-height: 1.5; }
+        .result-msg { font-size: 1.1rem; font-weight: 600; line-height: 1.5; word-break: keep-all; }
 
         button { width: 100%; background: var(--army-green); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: 0 8px 20px rgba(75, 83, 32, 0.3); }
         button:hover { background: #353b16; transform: translateY(-3px); }
-        button:active { transform: scale(0.98); }
 
         @keyframes pop { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
     </style>
@@ -39,7 +37,7 @@
     <div class="app-card">
         <div class="badge">제1포병 술자리 대대</div>
         <h1>조교의 <span>원샷 룰렛</span></h1>
-        <p class="subtitle">"목소리가 작다! 걸리면 원샷 실시!"</p>
+        <p class="subtitle">"목소리가 작다! 걸리면 즉시 실시!"</p>
 
         <div class="roulette-container">
             <div class="roulette-pointer"></div>
@@ -50,15 +48,16 @@
     </div>
 
     <div id="result-popup" onclick="this.style.display='none'">
-        <div class="result-title">📢 조교의 명령!</div>
+        <div class="result-title">📢 조교의 긴급 명령!</div>
         <div id="result-msg" class="result-msg"></div>
-        <p style="margin-top:20px; font-size:0.8rem; opacity:0.8;">(화면을 터치하면 닫힙니다)</p>
+        <p style="margin-top:20px; font-size:0.8rem; opacity:0.8;">(화면을 터치하면 복귀합니다)</p>
     </div>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const options = ["원샷 실시!", "좌우 옆사람 건배", "안주 압수", "나만 살기", "다같이 원샷", "조교의 애교", "00초간 댄스", "옆사람 먹여주기"];
+        // 형님 요청대로 "5초간 댄스"로 수정 완료!
+        const options = ["원샷 실시!", "좌우 옆사람 건배", "안주 압수", "나만 살기", "다같이 원샷", "조교의 애교", "5초간 댄스", "옆사람 먹여주기"];
         const colors = ["#4b5320", "#5c6628", "#6d7a2f", "#4b5320", "#5c6628", "#6d7a2f", "#4b5320", "#5c6628"];
 
         function drawRoulette() {
@@ -86,11 +85,8 @@
         function spin() {
             if (isSpinning) return;
             isSpinning = true;
-
-            // 이전 팝업 닫기
             document.getElementById('result-popup').style.display = 'none';
 
-            // 최소 5바퀴 + 랜덤 각도 추가
             const rotateAdd = Math.floor(Math.random() * 3600) + 1800; 
             currentRotation += rotateAdd; 
 
@@ -99,8 +95,6 @@
 
             setTimeout(() => {
                 isSpinning = false;
-                
-                // 화살표가 가리키는 인덱스 계산 (상단 270도 보정)
                 const actualDegree = currentRotation % 360;
                 const segmentDegree = 360 / options.length;
                 const index = Math.floor(((360 - actualDegree) + 270) % 360 / segmentDegree);
@@ -113,14 +107,22 @@
             const popup = document.getElementById('result-popup');
             const msgBox = document.getElementById('result-msg');
             
-            const armyQuotes = [
-                `"${msg}" 목소리가 작다! 똑바로 마신다! 실시!`,
-                `"${msg}" 정신 안 차립니까? 한 방에 끝냅니다!`,
-                `"${msg}" 오늘 밤 잠은 다 잤다! 지금 바로 실시!`,
-                `"${msg}" 보이지 않습니까? 동기 사랑 나라 사랑이다!`,
-            ];
+            let quote = "";
+            // 형님 요청: '조교의 애교'일 때 특별 멘트 꽂아넣기!
+            if (msg === "조교의 애교") {
+                quote = "조교의 애교 실시! 못 하겠나? 정신 안 차리나? 혀 반 토막 낼 때까지 실시!";
+            } else if (msg === "5초간 댄스") {
+                quote = "5초간 댄스 실시! 동작 봐라? 군기가 다 빠졌구만! 제대로 흔들어봅니다!";
+            } else {
+                const randomQuotes = [
+                    `"${msg}" 목소리가 작다! 똑바로 실시한다!`,
+                    `"${msg}" 정신 안 차립니까? 한 방에 끝냅니다!`,
+                    `"${msg}" 보이지 않습니까? 동기 사랑 나라 사랑이다!`,
+                ];
+                quote = randomQuotes[Math.floor(Math.random() * randomQuotes.length)];
+            }
             
-            msgBox.innerText = armyQuotes[Math.floor(Math.random() * armyQuotes.length)];
+            msgBox.innerText = quote;
             popup.style.display = 'block';
         }
 
